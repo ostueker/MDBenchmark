@@ -36,7 +36,7 @@ import mdengines.namd
 @click.option(
     '-n',
     '--name',
-    help='name of the input file',
+    help='name of the input file (.csv)',
     default='',
     show_default=True)
 @click.option(
