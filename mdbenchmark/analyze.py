@@ -113,7 +113,10 @@ def plot_analysis(df, ncores):
     help='directory to search benchmarks in',
     default='.',
     show_default=True)
-@click.option('-p', '--plot', is_flag=True, help='create plot of mdbenchmarks')
+@click.option('-p',
+    '--plot',
+    is_flag=True,
+    help='create plot of mdbenchmarks')
 @click.option(
     '--ncores',
     type=int,
@@ -121,11 +124,20 @@ def plot_analysis(df, ncores):
     help='Number of cores per node. If not given we try parsing it from simulation log'
     'based on the current host',
     show_default=True)
-@click.option('-e', '--modules', help='MD program files to analyze in directory',
+@click.option('-e',
+    '--modules',
+    help='MD program files to analyze in directory',
     default='',
     show_default=True,
     multiple=True)
-def analyze(directory, plot, ncores, engine):
+@click.option(
+    '-o',
+    '-output_name',
+    help="Name of the output .csv file.",
+    default="runtime.csv",
+    show_default=True
+)
+def analyze(directory, plot, ncores, engine, output_name):
     """analyze finished benchmark."""
     bundle = mds.discover(directory)
 
@@ -136,7 +148,7 @@ def analyze(directory, plot, ncores, engine):
     engine = formatted_md_engine_name(module)
 
     df = pd.DataFrame(columns=[
-        engine, 'nodes', 'ns/day', 'run time [min]', 'gpu', 'host', 'ncores'
+        'module', 'nodes', 'ns/day', 'run time [min]', 'gpu', 'host', 'ncores'
     ])
 
 
@@ -154,13 +166,13 @@ def analyze(directory, plot, ncores, engine):
             print("skipping a directory")
 
     # Sort values by `nodes`
-    df = df.sort_values(['host', engine, 'run time [min]', 'gpu',
+    df = df.sort_values(['host', 'module', 'run time [min]', 'gpu',
                          'nodes']).reset_index(drop=True)
     print(df)
-    df.to_csv('runtimes.csv')
+    df.to_csv(output_name)
 
     if plot:
-        df = pd.read_csv('runtimes.csv')
+        df = pd.read_csv(output_name)
 
         # We only support plotting of mdbenchmark systems from equal hosts /
         # with equal settings
