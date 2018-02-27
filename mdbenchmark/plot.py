@@ -48,9 +48,6 @@ def plot_line(df, label, ax=None):
 
 def plot_over_group(df, groupby, ax=None):
     # plot all lines
-    print(df.head())
-    print(groupby)
-    print(df.module)
     gb = df.groupby(groupby)
     for key, df in gb:
         label = ' '.join(['{}={}'.format(n, v) for n, v in zip(groupby, key)])
