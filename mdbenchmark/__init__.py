@@ -27,6 +27,6 @@ with warnings.catch_warnings():
         category=FutureWarning,
         module='h5py')
 
-    from . import analyze, generate, submit
+    from . import analyze, generate, submit, plot
 
     __version__ = '1.2.0'
