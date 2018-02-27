@@ -53,7 +53,8 @@ def plot_over_group(df, groupby, ax=None):
     print(df.module)
     gb = df.groupby(groupby)
     for key, df in gb:
-        plot_line(ax=ax, df=df, label=key)
+        label = ' '.join(['{}={}'.format(n, v) for n, v in zip(groupby, key)])
+        plot_line(ax=ax, df=df, label=label)
 
     # style axes
     ax.set_xlabel('Number of nodes')
