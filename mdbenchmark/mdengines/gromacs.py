@@ -146,8 +146,7 @@ def write_bench(top, tmpl, nodes, gpu, module, name, host, time):
 
 
 def check_input_file_exists(name):
-    """Check if the TPR file exists.
-    """
+    """Check if the TPR file exists."""
     fn = name
     if fn.endswith('.tpr'):
         fn = name[:-4]
@@ -158,7 +157,7 @@ def check_input_file_exists(name):
             "File {} does not exist, but is needed for GROMACS benchmarks.",
             tpr)
 
-    return
+    return True
 
 
 def cleanup_before_restart(sim):

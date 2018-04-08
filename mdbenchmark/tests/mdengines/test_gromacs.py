@@ -24,10 +24,9 @@ import click
 import datreant.core as dtr
 import numpy as np
 import pytest
-from six.moves import StringIO
-
 from mdbenchmark.ext.click_test import cli_runner
 from mdbenchmark.mdengines import gromacs
+from six.moves import StringIO
 
 
 @pytest.fixture
@@ -109,26 +108,19 @@ def test_cleanup_before_restart(tmpdir):
     assert FILES_TO_KEEP == [x[len(str(tmp)) + 1:] for x in files_found]
 
 
-def test_check_file_extension(cli_runner, tmpdir):
+def test_check_file_extension(capsys, tmpdir):
     """Test that we check for all files needed to run GROMACS benchmarks."""
-
-    @click.group()
-    def test_cli():
-        pass
-
-    @test_cli.command()
-    def test():
-        gromacs.check_input_file_exists('md')
-
     output = 'ERROR File md.tpr does not exist, but is needed for GROMACS benchmarks.\n'
-    result = cli_runner.invoke(test_cli, ['test'])
-    assert result.exit_code == 1
-    assert result.output == output
+    with pytest.raises(SystemExit) as e:
+        gromacs.check_input_file_exists('md')
+        out, err = capsys.readouterr()
+        assert e.type == SystemExit
+        assert e.code == 1
+        assert out == output
 
     with tmpdir.as_cwd():
         # Create files first
         with open('md.tpr', 'w') as fh:
             fh.write('dummy file')
 
-        result = cli_runner.invoke(test_cli, ['test'])
-        assert result.exit_code == 0
+        assert gromacs.check_input_file_exists('md')
