@@ -69,7 +69,11 @@ def plot_over_group(df, groupby, ax=None):
 
 
 @cli.command()
-@click.option('--csv', help='name of csv file')
+@click.option(
+    '--csv',
+    help='name of csv file',
+    multiple=True,
+    show_default=True)
 @click.option(
     '--groupby',
     '-g',
@@ -77,6 +81,25 @@ def plot_over_group(df, groupby, ax=None):
     help='columns to groupby for plot as comma separated string',
     default='gpu, module',
     show_default=True)
+@click.option(
+    '--splitby',
+    '-s',
+    type=str,
+    help='columns to splitbpy for plot output as comma separated string',
+    show_default=True)
+@click.option(
+    '--output-name',
+    '-o',
+    default='',
+    help="name of output files",
+    show_default=True)
+@click.option(
+    '--output-type',
+    '-t',
+    help="file extension for plot outputs",
+    type=click.Choice(['png', 'pdf', 'svg', 'jpeg']),
+    show_default=True,
+    default='png')
 def plot(csv, groupby):
     """Plot nice things"""
     df = pd.read_csv(csv, index_col=0)
@@ -87,8 +110,13 @@ def plot(csv, groupby):
     # clusters.
     fig = Figure()
     FigureCanvas(fig)
-    ax = fig.add_subplot(111)
+    ax = {}
+
+
+    ax[0] = fig.add_subplot(111)
     # remove whitespace
     groupby = [s.strip() for s in groupby.split(',')]
+
+
     plot_over_group(df, groupby, ax=ax)
     fig.savefig('results.pdf')
