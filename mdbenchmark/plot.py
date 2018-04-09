@@ -100,7 +100,7 @@ def plot_over_group(df, ax=None):
     '-h',
     default=None,
     multiple=True,
-    help="module name or engine name",
+    help="module name or engine name (gromacs, namd)",
     show_default=True)
 @click.option(
     '--host-name',
@@ -132,10 +132,26 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu):
     df = df.dropna()
 
     # preprocess the commandline entries
-    print(gpu)
-    print(cpu)
-    print(host_name)
-    print(module_name)
+
+    df_module_list = df['module'].tolist()
+    processed_module_names = []
+    print(df_module_list)
+    for module in module_name:
+        if module in ['namd', 'gromacs']:
+            real_module_names = [s for s in df_module_list if module in s]
+        elif module in df_module_list:
+            processed_module_names.append(module)
+        elif module not in df_module_list:
+            console.warn("The module {} does not exist in your data. Exiting",
+                         module)
+    processed_module_names = processed_module_names + real_module_names
+
+    host_list = df['host'].tolist()
+    for host in host_name:
+        if host not in host_list:
+            console.warn("The host {} does not exist in your csv data. Exiting.",
+                         host)
+
     gpu_list = []
     if gpu is True:
         gpu_list.append(True)
@@ -150,13 +166,13 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu):
     # here I initialize the list which will be plotted
     df_list = []
     for key, df in split_df:
-        if any(gpu in key for gpu in gpu_list) and len(host_name) == 0 and len(module_name) == 0:
+        if any(gpu in key for gpu in gpu_list) and len(host_name) == 0 and len(processed_module_names) == 0:
             df_list.append(df)
-        elif any(gpu in key for gpu in gpu_list) and any(host in key for host in host_name) and len(module_name) == 0:
+        elif any(gpu in key for gpu in gpu_list) and any(host in key for host in host_name) and len(processed_module_names) == 0:
             df_list.append(df)
-        elif any(gpu in key for gpu in gpu_list) and len(host_name) == 0 and any(module in key for module in module_name):
+        elif any(gpu in key for gpu in gpu_list) and len(host_name) == 0 and any(module in key for module in processed_module_names):
             df_list.append(df)
-        elif any(gpu in key for gpu in gpu_list) and any(host in key for host in host_name) and any(module in key for module in module_name):
+        elif any(gpu in key for gpu in gpu_list) and any(host in key for host in host_name) and any(module in key for module in processed_module_names):
             df_list.append(df)
     if len(df_list) == 0:
         console.error(
