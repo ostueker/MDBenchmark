@@ -100,7 +100,7 @@ def plot_over_group(df, ax=None):
     '-h',
     default=None,
     multiple=True,
-    help="module name or engine name (gromacs, namd)",
+    help="module name or engine name (gromacs, namd )",
     show_default=True)
 @click.option(
     '--host-name',
