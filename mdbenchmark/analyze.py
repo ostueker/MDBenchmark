@@ -24,6 +24,7 @@ import pandas as pd
 
 from . import console
 from .mdengines import detect_md_engine
+from .utils import generate_output_name
 
 from .cli import cli
 from .mdengines.gromacs import analyze_run

@@ -24,8 +24,8 @@ from matplotlib.figure import Figure
 import click
 
 from .cli import cli
-from .utils import calc_slope_intercept, lin_func
-
+from .utils import calc_slope_intercept, lin_func, generate_output_name
+from . import console
 
 def plot_line(df, label, ax=None):
     if ax is None:
@@ -46,9 +46,10 @@ def plot_line(df, label, ax=None):
     return ax
 
 
-def plot_over_group(df, groupby, ax=None):
+def plot_over_group(df, ax=None):
     # plot all lines
-    gb = df.groupby(groupby)
+    gb = df.groupby(['gpu','module','host'])
+    groupby = ['gpu','module','host']
     for key, df in gb:
         label = ' '.join(['{}={}'.format(n, v) for n, v in zip(groupby, key)])
         plot_line(ax=ax, df=df, label=label)
@@ -58,12 +59,12 @@ def plot_over_group(df, groupby, ax=None):
     ax.set_ylabel('Performance [ns/day]')
     ax.legend()
 
-    ax2 = ax.twiny()
-    ax1_xticks = ax.get_xticks()
-    ax2.set_xticks(ax1_xticks)
-    ax2.set_xbound(ax.get_xbound())
-    ax2.set_xticklabels(gb.get_group(list(gb.groups.keys())[0])['ncores'])
-    ax2.set_xlabel('{}'.format('{}\n\nCores'.format(df['host'][0])))
+    #ax2 = ax.twiny()
+    #ax1_xticks = ax.get_xticks()
+    #ax2.set_xticks(ax1_xticks)
+    #ax2.set_xbound(ax.get_xbound())
+    #ax2.set_xticklabels(gb.get_group(list(gb.groups.keys())[0])['ncores'])
+    #ax2.set_xlabel('{}'.format('{}\n\nCores'.format(df['host'][0])))
 
     return ax
 
@@ -75,48 +76,101 @@ def plot_over_group(df, groupby, ax=None):
     multiple=True,
     show_default=True)
 @click.option(
-    '--groupby',
-    '-g',
-    type=str,
-    help='columns to groupby for plot as comma separated string',
-    default='gpu, module',
-    show_default=True)
-@click.option(
-    '--splitby',
-    '-s',
-    type=str,
-    help='columns to splitbpy for plot output as comma separated string',
-    show_default=True)
-@click.option(
     '--output-name',
     '-o',
-    default='',
+    default=None,
     help="name of output files",
     show_default=True)
 @click.option(
     '--output-type',
     '-t',
     help="file extension for plot outputs",
-    type=click.Choice(['png', 'pdf', 'svg', 'jpeg']),
+    #type=click.Choice(['png', 'pdf', 'svg', 'jpeg']),
     show_default=True,
     default='png')
-def plot(csv, groupby):
+@click.option(
+    '--host-name',
+    '-h',
+    default=None,
+    multiple=True,
+    help="hostname",
+    show_default=True)
+@click.option(
+    '--module-name',
+    '-h',
+    default=None,
+    multiple=True,
+    help="module name or engine name",
+    show_default=True)
+@click.option(
+    '--host-name',
+    '-h',
+    default=None,
+    multiple=True,
+    help="hostname",
+    show_default=True)
+@click.option(
+    '--gpu/--no-gpu',
+    help="plot data for GPU runs",
+    show_default=True,
+    default=False)
+@click.option(
+    '--cpu/--no-cpu',
+    help="plot data for GPU runs",
+    show_default=True,
+    default=True)
+def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu):
     """Plot nice things"""
-    df = pd.read_csv(csv, index_col=0)
+    df_list = []
+    for c in csv:
+        tmp_df = pd.read_csv(c, index_col=0)
+        # append df_list
+        df_list.append(tmp_df)
+
+    df = pd.concat(df_list)
     # Remove NaN values. These are missing ncores/performance data.
     df = df.dropna()
-    # We have to use the matplotlib object-oriented interface directly, because
-    # it expects a display to be attached to the system, which we don't on the
-    # clusters.
+
+    # preprocess the commandline entries
+    print(gpu)
+    print(cpu)
+    print(host_name)
+    print(module_name)
+    gpu_list = []
+    if gpu is True:
+        gpu_list.append(True)
+    if cpu is True:
+        gpu_list.append(False)
+    print(gpu_list)
+    # here I split all data frames into the posible smallest segments
+    # this is necessary so we can plot all individually
+    split_df = df.groupby(['gpu', 'module', 'host'])
+
+    print(split_df)
+    # here I initialize the list which will be plotted
+    df_list = []
+    for key, df in split_df:
+        if any(gpu in key for gpu in gpu_list) and len(host_name) == 0 and len(module_name) == 0:
+            df_list.append(df)
+        elif any(gpu in key for gpu in gpu_list) and any(host in key for host in host_name) and len(module_name) == 0:
+            df_list.append(df)
+        elif any(gpu in key for gpu in gpu_list) and len(host_name) == 0 and any(module in key for module in module_name):
+            df_list.append(df)
+        elif any(gpu in key for gpu in gpu_list) and any(host in key for host in host_name) and any(module in key for module in module_name):
+            df_list.append(df)
+    if len(df_list) == 0:
+        console.error(
+            'Your selections contained no Benchmarking Information'
+            'Are you sure all your selections are correct?')
+
+    df = pd.concat(df_list)
     fig = Figure()
     FigureCanvas(fig)
-    ax = {}
+    ax = fig.add_subplot(111)
+    plot_over_group(df, ax=ax)
 
-
-    ax[0] = fig.add_subplot(111)
-    # remove whitespace
-    groupby = [s.strip() for s in groupby.split(',')]
-
-
-    plot_over_group(df, groupby, ax=ax)
-    fig.savefig('results.pdf')
+    if output_name is None:
+        output_name = generate_output_name("output_type")
+    if output_type not in output_name:
+        output_name = '{}.{}'.format(output_name, output_type)
+    fig.savefig(output_name)
