@@ -93,20 +93,7 @@ def analyze(directory, plot, ncores, output_name):
     df.to_csv(output_name)
 
     if plot:
-        raise NotImplemented
-        # df = pd.read_csv(output_name)
-
-        # # We only support plotting of benchmark systems from equal hosts /
-        # # with equal settings
-        # uniqueness = df.apply(lambda x: x.nunique())
-        # if uniqueness['gromacs'] > 1 or uniqueness['host'] > 1:
-        #     console.error(
-        #         'Cannot plot benchmarks for more than one GROMACS module '
-        #         'and/or host.')
-
-        # # Fail if we have no values at all. This should be some edge case when
-        # # a user fumbles around with the datreant categories
-        # if df['gpu'].empty and df[~df['gpu']].empty:
-        #     console.error('There is no data to plot.')
-
-        # plot_analysis(df, ncores)
+        console.error(
+            'The --plot falg is no longer supported.'
+            'Please use mdbenchmark plot to proceed.'
+            )
