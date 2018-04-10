@@ -69,11 +69,11 @@ def plot_over_group(df, plot_nodes, ax=None):
     ax.set_ylabel('Performance [ns/day]')
     ax.legend()
 
-    ax2 = ax.twiny()
-    ax1_xticks = ax.get_xticks()
-    ax2.set_xticks(ax1_xticks)
-    ax2.set_xticklabels(gb.get_group(list(gb.groups.keys())[0])[df_sel])
-    ax2.set_xbound(ax.get_xbound())
+    #ax2 = ax.twiny()
+    #ax1_xticks = ax.get_xticks()
+    #ax2.set_xticks(ax1_xticks)
+    #ax2.set_xticklabels(gb.get_group(list(gb.groups.keys())[0])[df_sel])
+    #ax2.set_xbound(ax.get_xbound())
     #ax2.set_xlabel('{}'.format('{}\n\nCores'.format(df['host'][0])))
 
     return ax
@@ -96,6 +96,7 @@ def plot_over_group(df, plot_nodes, ax=None):
     '-t',
     help="file extension for plot outputs",
     type=click.Choice(['png', 'pdf', 'svg', 'jpeg']),
+    multiple=True,
     show_default=True,
     default='png')
 @click.option(
@@ -136,14 +137,13 @@ def plot_over_group(df, plot_nodes, ax=None):
     default=False)
 def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_nodes):
     """Plot nice things"""
-    print(plot_nodes)
-    df_list = []
+
+    df = pd.DataFrame()
     for c in csv:
         tmp_df = pd.read_csv(c, index_col=0)
         # append df_list
-        df_list.append(tmp_df)
+        df.append(tmp_df, ignore_index=True)
 
-    df = pd.concat(df_list)
     # Remove NaN values. These are missing ncores/performance data.
     df = df.dropna()
 
@@ -158,7 +158,7 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_n
         elif module in df_module_list:
             processed_module_names.append(module)
         elif module not in df_module_list:
-            console.warn("The module {} does not exist in your data. Exiting",
+            console.error("The module {} does not exist in your data. Exiting",
                          module)
     if len(module_name) is not 0:
         processed_module_names = processed_module_names + real_module_names
@@ -166,15 +166,15 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_n
     host_list = df['host'].tolist()
     for host in host_name:
         if host not in host_list:
-            console.warn("The host {} does not exist in your csv data. Exiting.",
+            console.error("The host {} does not exist in your csv data. Exiting.",
                          host)
 
-    gpu_list = []
+    gpu_cpu_list = []
     if gpu is True:
-        gpu_list.append(True)
+        gpu_cpu_list.append(True)
     if cpu is True:
-        gpu_list.append(False)
-    print(gpu_list)
+        gpu_cpu_list.append(False)
+
     # here I split all data frames into the posible smallest segments
     # this is necessary so we can plot all individually
     split_df = df.groupby(['gpu', 'module', 'host'])
@@ -183,13 +183,13 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_n
     # here I initialize the list which will be plotted
     df_list = []
     for key, df in split_df:
-        if any(gpu in key for gpu in gpu_list) and len(host_name) == 0 and len(processed_module_names) == 0:
+        if any(gpu in key for gpu in gpu_cpu_list) and len(host_name) == 0 and len(processed_module_names) == 0:
             df_list.append(df)
-        elif any(gpu in key for gpu in gpu_list) and any(host in key for host in host_name) and len(processed_module_names) == 0:
+        elif any(gpu in key for gpu in gpu_cpu_list) and any(host in key for host in host_name) and len(processed_module_names) == 0:
             df_list.append(df)
-        elif any(gpu in key for gpu in gpu_list) and len(host_name) == 0 and any(module in key for module in processed_module_names):
+        elif any(gpu in key for gpu in gpu_cpu_list) and len(host_name) == 0 and any(module in key for module in processed_module_names):
             df_list.append(df)
-        elif any(gpu in key for gpu in gpu_list) and any(host in key for host in host_name) and any(module in key for module in processed_module_names):
+        elif any(gpu in key for gpu in gpu_cpu_list) and any(host in key for host in host_name) and any(module in key for module in processed_module_names):
             df_list.append(df)
     if len(df_list) == 0:
         console.error(
@@ -202,9 +202,9 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_n
     ax = fig.add_subplot(111)
     plot_over_group(df, plot_nodes, ax=ax)
 
-
-    if output_name is None:
-        output_name = generate_output_name(output_type)
-    if output_type not in output_name:
-        output_name = '{}.{}'.format(output_name, output_type)
-    fig.savefig(output_name)
+    for output in output_type:
+        if output_name is None:
+            output_name = generate_output_name(output)
+        if output_type not in output_name:
+            output_name = '{}.{}'.format(output_name, output)
+        fig.savefig(output_name)
