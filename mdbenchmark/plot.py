@@ -27,43 +27,53 @@ from .cli import cli
 from .utils import calc_slope_intercept, lin_func, generate_output_name
 from . import console
 
-def plot_line(df, label, ax=None):
+
+def plot_line(df, df_sel, label, ax=None):
     if ax is None:
         ax = plt.gca()
 
-    p = ax.plot('nodes', 'ns/day', '.-', data=df, ms='10', label=label)
+    p = ax.plot(df_sel, 'ns/day', '.-', data=df, ms='10', label=label)
     color = p[0].get_color()
     slope, intercept = calc_slope_intercept(
-        (df['nodes'].iloc[0], df['ns/day'].iloc[0]), (df['nodes'].iloc[1],
+        (df[df_sel].iloc[0], df['ns/day'].iloc[0]), (df[df_sel].iloc[1],
                                                       df['ns/day'].iloc[1]))
     # avoid a label and use values instead of pd.Series
     ax.plot(
-        df['nodes'],
-        lin_func(df['nodes'].values, slope, intercept),
+        df[df_sel],
+        lin_func(df[df_sel].values, slope, intercept),
         ls='--',
         color=color,
         alpha=.5)
     return ax
 
 
-def plot_over_group(df, ax=None):
+def plot_over_group(df, plot_nodes, ax=None):
     # plot all lines
-    gb = df.groupby(['gpu','module','host'])
-    groupby = ['gpu','module','host']
+    if plot_nodes is True:
+        df_sel = "nodes"
+    else:
+        df_sel = "ncores"
+    gb = df.groupby(['gpu', 'module', 'host'])
+    groupby = ['gpu', 'module', 'host']
     for key, df in gb:
         label = ' '.join(['{}={}'.format(n, v) for n, v in zip(groupby, key)])
-        plot_line(ax=ax, df=df, label=label)
+        plot_line(df=df, df_sel=df_sel, ax=ax, label=label)
 
     # style axes
-    ax.set_xlabel('Number of nodes')
+    if plot_nodes is True:
+        ax.set_xlabel('Number of Nodes')
+    elif plot_nodes is False:
+        ax.set_xlabel('Number of Cores')
+
+
     ax.set_ylabel('Performance [ns/day]')
     ax.legend()
 
-    #ax2 = ax.twiny()
-    #ax1_xticks = ax.get_xticks()
-    #ax2.set_xticks(ax1_xticks)
-    #ax2.set_xbound(ax.get_xbound())
-    #ax2.set_xticklabels(gb.get_group(list(gb.groups.keys())[0])['ncores'])
+    ax2 = ax.twiny()
+    ax1_xticks = ax.get_xticks()
+    ax2.set_xticks(ax1_xticks)
+    ax2.set_xticklabels(gb.get_group(list(gb.groups.keys())[0])[df_sel])
+    ax2.set_xbound(ax.get_xbound())
     #ax2.set_xlabel('{}'.format('{}\n\nCores'.format(df['host'][0])))
 
     return ax
@@ -85,7 +95,7 @@ def plot_over_group(df, ax=None):
     '--output-type',
     '-t',
     help="file extension for plot outputs",
-    #type=click.Choice(['png', 'pdf', 'svg', 'jpeg']),
+    type=click.Choice(['png', 'pdf', 'svg', 'jpeg']),
     show_default=True,
     default='png')
 @click.option(
@@ -119,8 +129,14 @@ def plot_over_group(df, ax=None):
     help="plot data for GPU runs",
     show_default=True,
     default=True)
-def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu):
+@click.option(
+    '--plot-nodes/--plot-cores',
+    help="Plot performance per node instead of core",
+    show_default=True,
+    default=False)
+def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_nodes):
     """Plot nice things"""
+    print(plot_nodes)
     df_list = []
     for c in csv:
         tmp_df = pd.read_csv(c, index_col=0)
@@ -144,7 +160,8 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu):
         elif module not in df_module_list:
             console.warn("The module {} does not exist in your data. Exiting",
                          module)
-    processed_module_names = processed_module_names + real_module_names
+    if len(module_name) is not 0:
+        processed_module_names = processed_module_names + real_module_names
 
     host_list = df['host'].tolist()
     for host in host_name:
@@ -177,16 +194,17 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu):
     if len(df_list) == 0:
         console.error(
             'Your selections contained no Benchmarking Information'
-            'Are you sure all your selections are correct?')
+            'Are you surhe all your selections are correct?')
 
     df = pd.concat(df_list)
     fig = Figure()
     FigureCanvas(fig)
     ax = fig.add_subplot(111)
-    plot_over_group(df, ax=ax)
+    plot_over_group(df, plot_nodes, ax=ax)
+
 
     if output_name is None:
-        output_name = generate_output_name("output_type")
+        output_name = generate_output_name(output_type)
     if output_type not in output_name:
         output_name = '{}.{}'.format(output_name, output_type)
     fig.savefig(output_name)
