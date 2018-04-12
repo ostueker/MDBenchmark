@@ -49,7 +49,7 @@ def plot_line(df, df_sel, label, ax=None):
 
 def plot_over_group(df, plot_nodes, ax=None):
     # plot all lines
-    if plot_nodes is True:
+    if plot_nodes is False:
         df_sel = "nodes"
     else:
         df_sel = "ncores"
@@ -96,7 +96,6 @@ def plot_over_group(df, plot_nodes, ax=None):
     '-t',
     help="file extension for plot outputs",
     type=click.Choice(['png', 'pdf', 'svg', 'jpeg']),
-    multiple=True,
     show_default=True,
     default='png')
 @click.option(
@@ -111,7 +110,7 @@ def plot_over_group(df, plot_nodes, ax=None):
     '-h',
     default=None,
     multiple=True,
-    help="module name or engine name (gromacs, namd )",
+    help="module name or engine name (gromacs, namd)",
     show_default=True)
 @click.option(
     '--host-name',
@@ -131,18 +130,23 @@ def plot_over_group(df, plot_nodes, ax=None):
     show_default=True,
     default=True)
 @click.option(
-    '--plot-nodes/--plot-cores',
+    '--plot-cores/--plot-nodes',
     help="Plot performance per node instead of core",
     show_default=True,
     default=False)
-def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_nodes):
+def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_cores):
     """Plot nice things"""
 
     df = pd.DataFrame()
+    df2 = pd.DataFrame()
+    df_list = []
     for c in csv:
+
         tmp_df = pd.read_csv(c, index_col=0)
         # append df_list
-        df.append(tmp_df, ignore_index=True)
+        df_list.append(tmp_df)
+
+    df = pd.concat(df_list)
 
     # Remove NaN values. These are missing ncores/performance data.
     df = df.dropna()
@@ -200,11 +204,10 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_n
     fig = Figure()
     FigureCanvas(fig)
     ax = fig.add_subplot(111)
-    plot_over_group(df, plot_nodes, ax=ax)
+    plot_over_group(df, plot_cores, ax=ax)
 
-    for output in output_type:
-        if output_name is None:
-            output_name = generate_output_name(output)
-        if output_type not in output_name:
-            output_name = '{}.{}'.format(output_name, output)
-        fig.savefig(output_name)
+    if output_name is None:
+        output_name = generate_output_name(output_type)
+    if output_type not in output_name:
+        output_name = '{}.{}'.format(output_name, output_type)
+    fig.savefig(output_name)
