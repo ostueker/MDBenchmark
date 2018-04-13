@@ -36,7 +36,7 @@ def plot_line(df, df_sel, label, ax=None):
     color = p[0].get_color()
     slope, intercept = calc_slope_intercept(
         (df[df_sel].iloc[0], df['ns/day'].iloc[0]), (df[df_sel].iloc[1],
-                                                      df['ns/day'].iloc[1]))
+                                                     df['ns/day'].iloc[1]))
     # avoid a label and use values instead of pd.Series
     ax.plot(
         df[df_sel],
@@ -66,12 +66,12 @@ def plot_over_group(df, plot_cores, ax=None):
     ax.set_ylabel('Performance [ns/day]')
     ax.legend()
 
-    #ax2 = ax.twiny()
-    #ax1_xticks = ax.get_xticks()
-    #ax2.set_xticks(ax1_xticks)
-    #ax2.set_xticklabels(gb.get_group(list(gb.groups.keys())[0])[df_sel])
-    #ax2.set_xbound(ax.get_xbound())
-    #ax2.set_xlabel('{}'.format('{}\n\nCores'.format(df['host'][0])))
+    # ax2 = ax.twiny()
+    # ax1_xticks = ax.get_xticks()
+    # ax2.set_xticks(ax1_xticks)
+    # ax2.set_xticklabels(gb.get_group(list(gb.groups.keys())[0])[df_sel])
+    # ax2.set_xbound(ax.get_xbound())
+    # ax2.set_xlabel('{}'.format('{}\n\nCores'.format(df['host'][0])))
 
     return ax
 
@@ -159,16 +159,14 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
         elif module in df_module_list:
             processed_module_names.append(module)
         elif module not in df_module_list:
-            console.error("The module {} does not exist in your data. Exiting",
-                         module)
+            console.error("The module {} does not exist in your data. Exiting", module)
     if len(module_name) is not 0:
         processed_module_names = processed_module_names + real_module_names
         print(processed_module_names)
     host_list = df['host'].tolist()
     for host in host_name:
         if host not in host_list:
-            console.error("The host {} does not exist in your csv data. Exiting.",
-                         host)
+            console.error("The host {} does not exist in your csv data. Exiting.", host)
 
     gpu_cpu_list = []
     if gpu is True:
