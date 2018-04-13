@@ -49,7 +49,7 @@ def plot_line(df, df_sel, label, ax=None):
 
 def plot_over_group(df, plot_cores, ax=None):
     # plot all lines
-    df_sel = 'ncores' if 'plot_cores' else 'nodes'
+    df_sel = 'ncores' if plot_cores else 'nodes'
 
     gb = df.groupby(['gpu', 'module', 'host'])
     groupby = ['gpu', 'module', 'host']
@@ -130,7 +130,7 @@ def plot_over_group(df, plot_cores, ax=None):
     '--plot-cores',
     help="Plot performance per core instead of nodes",
     show_default=True,
-    default=False)
+    is_flag=True)
 def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_cores):
     """Plot nice things"""
 
