@@ -182,13 +182,29 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
     # here I initialize the list which will be plotted
     df_list = []
     for key, df in split_df:
-        if any(gpu in key for gpu in gpu_cpu_list) and len(host_name) == 0 and len(processed_module_names) == 0:
+        if (
+            any(gpu in key for gpu in gpu_cpu_list) and
+            len(host_name) == 0 and
+            len(processed_module_names) == 0
+        ):
             df_list.append(df)
-        elif any(gpu in key for gpu in gpu_cpu_list) and any(host in key for host in host_name) and len(processed_module_names) == 0:
+        elif (
+            any(gpu in key for gpu in gpu_cpu_list) and
+            any(host in key for host in host_name) and
+            len(processed_module_names) == 0
+        ):
             df_list.append(df)
-        elif any(gpu in key for gpu in gpu_cpu_list) and len(host_name) == 0 and any(module in key for module in processed_module_names):
+        elif (
+            any(gpu in key for gpu in gpu_cpu_list) and
+            len(host_name) == 0 and
+            any(module in key for module in processed_module_names)
+        ):
             df_list.append(df)
-        elif any(gpu in key for gpu in gpu_cpu_list) and any(host in key for host in host_name) and any(module in key for module in processed_module_names):
+        elif (
+            any(gpu in key for gpu in gpu_cpu_list) and
+            any(host in key for host in host_name) and
+            any(module in key for module in processed_module_names)
+        ):
             df_list.append(df)
     if len(df_list) == 0:
         console.error(
