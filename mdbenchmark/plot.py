@@ -47,12 +47,10 @@ def plot_line(df, df_sel, label, ax=None):
     return ax
 
 
-def plot_over_group(df, plot_nodes, ax=None):
+def plot_over_group(df, plot_cores, ax=None):
     # plot all lines
-    if plot_nodes is False:
-        df_sel = "nodes"
-    else:
-        df_sel = "ncores"
+    df_sel = 'ncores' if 'plot_cores' else 'nodes'
+
     gb = df.groupby(['gpu', 'module', 'host'])
     groupby = ['gpu', 'module', 'host']
     for key, df in gb:
@@ -60,11 +58,10 @@ def plot_over_group(df, plot_nodes, ax=None):
         plot_line(df=df, df_sel=df_sel, ax=ax, label=label)
 
     # style axes
-    if plot_nodes is True:
-        ax.set_xlabel('Number of Nodes')
-    elif plot_nodes is False:
+    if plot_cores:
         ax.set_xlabel('Number of Cores')
-
+    else:
+        ax.set_xlabel('Number of Nodes')
 
     ax.set_ylabel('Performance [ns/day]')
     ax.legend()
@@ -95,7 +92,7 @@ def plot_over_group(df, plot_nodes, ax=None):
     '--output-type',
     '-t',
     help="file extension for plot outputs",
-    type=click.Choice(['png', 'pdf', 'svg', 'jpeg']),
+    type=click.Choice(['png', 'pdf', 'svg', 'ps']),
     show_default=True,
     default='png')
 @click.option(
@@ -130,8 +127,8 @@ def plot_over_group(df, plot_nodes, ax=None):
     show_default=True,
     default=True)
 @click.option(
-    '--plot-cores/--plot-nodes',
-    help="Plot performance per node instead of core",
+    '--plot-cores',
+    help="Plot performance per core instead of nodes",
     show_default=True,
     default=False)
 def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_cores):
@@ -166,7 +163,7 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
                          module)
     if len(module_name) is not 0:
         processed_module_names = processed_module_names + real_module_names
-
+        print(processed_module_names)
     host_list = df['host'].tolist()
     for host in host_name:
         if host not in host_list:
@@ -198,7 +195,7 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
     if len(df_list) == 0:
         console.error(
             'Your selections contained no Benchmarking Information'
-            'Are you surhe all your selections are correct?')
+            'Are you sure all your selections are correct?')
 
     df = pd.concat(df_list)
     fig = Figure()
