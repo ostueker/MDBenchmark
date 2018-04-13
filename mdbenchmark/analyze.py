@@ -32,7 +32,7 @@ from .utils import generate_output_name, calc_slope_intercept, lin_func
 
 from .cli import cli
 from .mdengines.gromacs import analyze_run
-
+from .plot import plot_line
 
 
 @cli.command()
@@ -121,23 +121,3 @@ def analyze(directory, plot, ncores, output_name):
 
         fig.tight_layout()
         fig.savefig('runtimes.pdf', format='pdf')
-
-
-def plot_line(df, df_sel, label, ax=None):
-    if ax is None:
-        ax = plt.gca()
-
-    p = ax.plot(df_sel, 'ns/day', '.-', data=df, ms='10', label=label)
-    color = p[0].get_color()
-    slope, intercept = calc_slope_intercept(
-        (df[df_sel].iloc[0], df['ns/day'].iloc[0]), (df[df_sel].iloc[1],
-                                                     df['ns/day'].iloc[1]))
-    # avoid a label and use values instead of pd.Series
-    ax.plot(
-        df[df_sel],
-        lin_func(df[df_sel].values, slope, intercept),
-        ls='--',
-        color=color,
-        alpha=.5)
-
-    return ax
