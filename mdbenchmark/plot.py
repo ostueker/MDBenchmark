@@ -155,18 +155,20 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
 
     for module in module_name:
         if module in ['namd', 'gromacs']:
-            console.info("plotting all modules for engine {}", module)
-            real_module_names = [s for s in df_module_list if module in s]
+            temp_module_names = []
+            console.info("plotting all modules for engine {}.", module)
+            temp_module_names = [s for s in df_module_list if module in s]
         elif module in df_module_list:
             processed_module_names.append(module)
         elif module not in df_module_list:
-            console.error("The module {} does not exist in your data. Exiting", module)
-    if len(module_name) is not 0:
-        processed_module_names = processed_module_names + real_module_names
-    else:
+            console.error("The module {} does not exist in your data. Exiting.", module)
+        if len(temp_module_names) is not 0:
+            processed_module_names = processed_module_names + temp_module_names
+
+    if len(module_name) is 0:
         console.error("No modules or engines were detected in your data.")
 
-    console.info('The following modules will be plotted {}', set(processed_module_names))
+    console.info('The following modules will be plotted {}.', set(processed_module_names))
 
     host_list = df['host'].tolist()
     for host in host_name:
