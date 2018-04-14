@@ -135,7 +135,7 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
     """Plot nice things"""
 
     df = pd.DataFrame()
-    df2 = pd.DataFrame()
+
     df_list = []
     for c in csv:
 
@@ -152,9 +152,10 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
 
     df_module_list = df['module'].tolist()
     processed_module_names = []
-    print(df_module_list)
+
     for module in module_name:
         if module in ['namd', 'gromacs']:
+            console.info("plotting all modules for engine {}", module)
             real_module_names = [s for s in df_module_list if module in s]
         elif module in df_module_list:
             processed_module_names.append(module)
@@ -162,7 +163,11 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
             console.error("The module {} does not exist in your data. Exiting", module)
     if len(module_name) is not 0:
         processed_module_names = processed_module_names + real_module_names
-        print(processed_module_names)
+    else:
+        console.error("No modules or engines were detected in your data.")
+
+    console.info('The following modules will be plotted {}', set(processed_module_names))
+
     host_list = df['host'].tolist()
     for host in host_name:
         if host not in host_list:
@@ -178,7 +183,6 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
     # this is necessary so we can plot all individually
     split_df = df.groupby(['gpu', 'module', 'host'])
 
-    print(split_df)
     # here I initialize the list which will be plotted
     df_list = []
     for key, df in split_df:
@@ -206,6 +210,7 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
             any(module in key for module in processed_module_names)
         ):
             df_list.append(df)
+
     if len(df_list) == 0:
         console.error(
             'Your selections contained no Benchmarking Information'
@@ -222,3 +227,5 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
     if output_type not in output_name:
         output_name = '{}.{}'.format(output_name, output_type)
     fig.savefig(output_name)
+    console.info(
+        'Your file was saved as {} in the working directory.', output_name)
