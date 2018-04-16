@@ -123,7 +123,7 @@ def plot_over_group(df, plot_cores, ax=None):
     default=False)
 @click.option(
     '--cpu/--no-cpu',
-    help="plot data for GPU runs",
+    help="plot data for CPU runs",
     show_default=True,
     default=True)
 @click.option(
@@ -152,12 +152,13 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
 
     df_module_list = df['module'].tolist()
     processed_module_names = []
+    temp_module_names = []
 
     for module in module_name:
         if module in ['namd', 'gromacs']:
-            temp_module_names = []
             console.info("plotting all modules for engine {}.", module)
             temp_module_names = [s for s in df_module_list if module in s]
+            print(temp_module_names)
         elif module in df_module_list:
             processed_module_names.append(module)
         elif module not in df_module_list:
@@ -165,15 +166,23 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
         if len(temp_module_names) is not 0:
             processed_module_names = processed_module_names + temp_module_names
 
-    if len(module_name) is 0:
+    if len(processed_module_names) is 0 and len(module_name) is not 0:
         console.error("No modules or engines were detected in your data.")
 
-    console.info('The following modules will be plotted {}.', set(processed_module_names))
+    if len(module_name) is not 0:
+        console.info('Data for the following modules will be plotted: {}.', set(processed_module_names))
+    else:
+        console.info('All modules will be plotted.')
 
     host_list = df['host'].tolist()
     for host in host_name:
         if host not in host_list:
-            console.error("The host {} does not exist in your csv data. Exiting.", host)
+            console.error('The host {} does not exist in your csv data. Exiting.', host)
+
+    if len(host_name) is not 0:
+        console.info('Data for the following hosts will be plotted: {}.', host_name)
+    else:
+        console.info('All hosts will be plotted.')
 
     gpu_cpu_list = []
     if gpu is True:
@@ -187,6 +196,7 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
 
     # here I initialize the list which will be plotted
     df_list = []
+
     for key, df in split_df:
         if (
             any(gpu in key for gpu in gpu_cpu_list) and
@@ -206,6 +216,7 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
             any(module in key for module in processed_module_names)
         ):
             df_list.append(df)
+
         elif (
             any(gpu in key for gpu in gpu_cpu_list) and
             any(host in key for host in host_name) and
@@ -215,8 +226,10 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
 
     if len(df_list) == 0:
         console.error(
-            'Your selections contained no Benchmarking Information'
+            'Your selections contained no Benchmarking Information.\n'
             'Are you sure all your selections are correct?')
+    else:
+        console.info('A total of {} runs will be plotted.', len(df_list))
 
     df = pd.concat(df_list)
     fig = Figure()
