@@ -180,7 +180,7 @@ def plot(csv, output_name, output_type, host_name, module_name, gpu, cpu, plot_c
             console.error('The host {} does not exist in your csv data. Exiting.', host)
 
     if len(host_name) is not 0:
-        console.info('Data for the following hosts will be plotted: {}.', host_name)
+        console.info('Data for the following hosts will be plotted: {}.', set(host_name))
     else:
         console.info('All hosts will be plotted.')
 
