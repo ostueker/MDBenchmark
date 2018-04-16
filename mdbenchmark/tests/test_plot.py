@@ -25,99 +25,118 @@ from numpy.testing import assert_equal
 from pandas.testing import assert_frame_equal
 
 from mdbenchmark import utils
+from mdbenchmark import cli
+from mdbenchmark.testing import data
 from mdbenchmark.ext.click_test import cli_runner
 
 
-@pytest.mark.parametrize('module_selection', 'host', [
-    ('gromacs/2018', 'draco'),
-    ('namd/2.12', 'draco'),
-    ('gromacs/2016.3', 'hydra')
-])
-def test_plot_filtering_success(cli_runner, tmpdir, data module_selection, expected_df, host):
-    """Test whether we can plot over different groups.
-    """
-    with tmpdir.as_cwd():
-
-        output = 'The following modules will be plotted {{'{}'}}.\n'.format{module_selection} \
-                 'Your file was saved as testpng.png in the working directory.''
-
-        result = cli_runner.invoke(cli.cli, [
-            'plot',
-            '--csv=test.csv', '--module-name={}'.format(module_selection),
-            '--host-name={}'.format(host), '--output-name=testpng'
-        ])
-        assert result.exit_code == 0
-        assert result.output == output
-        assert os .path.exists("testpng.png")
-
-
-def test_plot_filtering_fail(cli_runner, tmpdir):
-    """Test unsuccessful filtering and error message.
-    """
-    with tmpdir.as_cwd():
-
-        output = ''
-
-        result = cli_runner.invoke(cli.cli, [
-            'plot',
-            '--csv=test.csv', '--module-name={}'.format(module_selection),
-            '--host-name={}'.format(host), '--output-name=testpng'
-        ])
+# @pytest.mark.parametrize('module_selection', 'host', [
+#     ('gromacs/2018', 'draco'),
+#     ('namd/2.12', 'draco'),
+#     ('gromacs/2016.3', 'hydra')
+# ])
+# def test_plot_filtering_success(cli_runner, tmpdir, data module_selection, expected_df, host):
+#     """Test whether we can plot over different groups.
+#     """
+#     with tmpdir.as_cwd():
+#
+#         output = 'The following modules will be plotted {{'{}'}}.\n'.format{module_selection} \
+#                  'Your file was saved as testpng.png in the working directory.''
+#
+#         result = cli_runner.invoke(cli.cli, [
+#             'plot',
+#             '--csv=test.csv', '--module-name={}'.format(module_selection),
+#             '--host-name={}'.format(host), '--output-name=testpng'
+#         ])
+#         assert result.exit_code == 0
+#         assert result.output == output
+#         assert os.path.exists("testpng.png")
 
 
-def test_plot_gpu(cli_runner, tmpdir):
+# def test_plot_filtering_fail(cli_runner, tmpdir):
+#     """Test unsuccessful filtering and error message.
+#     """
+#     with tmpdir.as_cwd():
+#
+#         output = ''
+#
+#         result = cli_runner.invoke(cli.cli, [
+#             'plot',
+#             '--csv=test.csv', '--module-name={}'.format(module_selection),
+#             '--host-name={}'.format(host), '--output-name=testpng'
+#         ])
+
+
+def test_plot_gpu(cli_runner, tmpdir, data):
     """Test gpu flage without any host or module.
     """
     with tmpdir.as_cwd():
-
-        output = ''
+        output = 'All modules will be plotted.\n' \
+                 'All hosts will be plotted.\n' \
+                 'A total of 4 runs will be plotted.\n' \
+                 'Your file was saved as testpng.png in the working directory.\n' \
 
         result = cli_runner.invoke(cli.cli, [
             'plot',
-            '--csv=test.csv', '--module-name={}'.format(module_selection),
-            '--host-name={}'.format(host), '--output-name=testpng'
+            '--csv={}'.format(data['test.csv']), '--gpu', '--output-name=testpng.png'
         ])
+
+        assert result.exit_code == 0
+        assert result.output == output
+        assert os.path.exists("testpng.png")
 
 
 @pytest.mark.parametrize('host', ('draco', 'hydra'))
-def test_plot_host_only(cli_runner, tmpdir):
+def test_plot_host_only(cli_runner, tmpdir, host, data):
     """Test only giving a host.
     """
     with tmpdir.as_cwd():
 
-        output = ''
+        output = 'All modules will be plotted.\n' \
+                 'Data for the following hosts will be plotted: {{\'{}\'}}.\n'\
+                 'A total of 1 runs will be plotted.\n' \
+                 'Your file was saved as testpng.png in the working directory.\n'.format(host)
 
         result = cli_runner.invoke(cli.cli, [
             'plot',
-            '--csv=test.csv', '--module-name={}'.format(module_selection),
-            '--host-name={}'.format(host), '--output-name=testpng'
+            '--csv={}'.format(data['test.csv']), '--host-name={}'.format(host),
+            '--output-name=testpng.png'
         ])
 
-
-@pytest.mark.parametrize('module', ('gromacs', 'namd', 'namd/2.12', 'gromacs/2018'))
-def test_plot_module_only(cli_runner, tmpdir, module):
-    """Test only giving a module.
-    """
-    with tmpdir.as_cwd():
-
-        output = ''
-
-        result = cli_runner.invoke(cli.cli, [
-            'plot',
-            '--csv=test.csv', '--module-name={}'.format(module_selection),
-            '--host-name={}'.format(host), '--output-name=testpng'
-        ])
+        assert result.exit_code == 0
+        assert result.output == output
+        assert os.path.exists("testpng.png")
 
 
+# @pytest.mark.parametrize('module', ('gromacs', 'namd', 'namd/2.12', 'gromacs/2018'))
+# def test_plot_module_only(cli_runner, tmpdir, module):
+#     """Test only giving a module.
+#     """
+#     with tmpdir.as_cwd():
+#
+#         output = ''
+#
+#         result = cli_runner.invoke(cli.cli, [
+#             'plot',
+#             '--csv=test.csv', '--module-name={}'.format(module_selection),
+#             '--host-name={}'.format(host), '--output-name=testpng'
+#         ])
+#
+#
 @pytest.mark.parametrize('output_type', ('png', 'pdf'))
-def test_plot_output_type(cli_runner, tmpdir, output_type):
+def test_plot_output_type(cli_runner, tmpdir, data, output_type):
     """check whether output types are constructed correctly
     """
     with tmpdir.as_cwd():
 
+        output = 'All modules will be plotted.\n' \
+                 'All hosts will be plotted.\n' \
+                 'A total of 2 runs will be plotted.\n' \
+                 'Your file was saved as test.{} in the working directory.\n'.format(output_type)
+
         result = cli_runner.invoke(cli.cli, [
             'plot',
-            '--csv=test.csv'.format(data['analyze-files-gromacs']),
+            '--csv={}'.format(data['test.csv']), '--output-name=testfile', '--output-type={}'.format(output_type)
         ])
         assert result.exit_code == 0
         assert os.path.exists("testfile.{}".format(output_type))
