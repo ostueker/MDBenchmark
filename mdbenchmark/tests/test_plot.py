@@ -28,24 +28,85 @@ from mdbenchmark import utils
 from mdbenchmark.ext.click_test import cli_runner
 
 
-@pytest.mark.parametrize('module_selection', 'expected_df', 'host', 'gpu',[
-    ("gromacs", 'gromacs.csv', 'draco', 'False'),
-    ("namd", 'namd.csv', 'draco', 'False'),
-    ("gromacs/2016.3", 'gromacs_2016', 'hydra', 'False'),
+@pytest.mark.parametrize('module_selection', 'host', [
+    ('gromacs/2018', 'draco'),
+    ('namd/2.12', 'draco'),
+    ('gromacs/2016.3', 'hydra')
 ])
-def test_plot_filtering(cli_runner, tmpdir, module_selection, expected_df, host, gpu):
+def test_plot_filtering_success(cli_runner, tmpdir, data module_selection, expected_df, host):
     """Test whether we can plot over different groups.
     """
     with tmpdir.as_cwd():
 
+        output = 'The following modules will be plotted {{'{}'}}.\n'.format{module_selection} \
+                 'Your file was saved as testpng.png in the working directory.''
+
         result = cli_runner.invoke(cli.cli, [
             'plot',
-            '--csv=test.csv'.format(data['analyze-files-gromacs']),
+            '--csv=test.csv', '--module-name={}'.format(module_selection),
+            '--host-name={}'.format(host), '--output-name=testpng'
         ])
         assert result.exit_code == 0
+        assert result.output == output
+        assert os .path.exists("testpng.png")
 
 
-    assert os.path.exists("testpdf.pdf")
+def test_plot_filtering_fail(cli_runner, tmpdir):
+    """Test unsuccessful filtering and error message.
+    """
+    with tmpdir.as_cwd():
+
+        output = ''
+
+        result = cli_runner.invoke(cli.cli, [
+            'plot',
+            '--csv=test.csv', '--module-name={}'.format(module_selection),
+            '--host-name={}'.format(host), '--output-name=testpng'
+        ])
+
+
+def test_plot_gpu(cli_runner, tmpdir):
+    """Test gpu flage without any host or module.
+    """
+    with tmpdir.as_cwd():
+
+        output = ''
+
+        result = cli_runner.invoke(cli.cli, [
+            'plot',
+            '--csv=test.csv', '--module-name={}'.format(module_selection),
+            '--host-name={}'.format(host), '--output-name=testpng'
+        ])
+
+
+@pytest.mark.parametrize('host', ('draco', 'hydra'))
+def test_plot_host_only(cli_runner, tmpdir):
+    """Test only giving a host.
+    """
+    with tmpdir.as_cwd():
+
+        output = ''
+
+        result = cli_runner.invoke(cli.cli, [
+            'plot',
+            '--csv=test.csv', '--module-name={}'.format(module_selection),
+            '--host-name={}'.format(host), '--output-name=testpng'
+        ])
+
+
+@pytest.mark.parametrize('module', ('gromacs', 'namd', 'namd/2.12', 'gromacs/2018'))
+def test_plot_module_only(cli_runner, tmpdir, module):
+    """Test only giving a module.
+    """
+    with tmpdir.as_cwd():
+
+        output = ''
+
+        result = cli_runner.invoke(cli.cli, [
+            'plot',
+            '--csv=test.csv', '--module-name={}'.format(module_selection),
+            '--host-name={}'.format(host), '--output-name=testpng'
+        ])
 
 
 @pytest.mark.parametrize('output_type', ('png', 'pdf'))
