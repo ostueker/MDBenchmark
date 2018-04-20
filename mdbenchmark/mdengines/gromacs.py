@@ -125,6 +125,9 @@ def write_bench(top, tmpl, nodes, gpu, module, name, host, time):
         full_filename = name
         name = name[:-4]
 
+    # determine module version for use in the template
+    version = module.split('/')[1]
+
     copyfile(full_filename, sim[full_filename].relpath)
     # Add some time buffer to the requested time. Otherwise the queuing system
     # kills the jobs before GROMACS can finish
@@ -139,7 +142,8 @@ def write_bench(top, tmpl, nodes, gpu, module, name, host, time):
         mdengine=md_engine,
         n_nodes=nodes,
         time=time,
-        formatted_time=formatted_time)
+        formatted_time=formatted_time,
+        version=version)
 
     with open(sim['bench.job'].relpath, 'w') as fh:
         fh.write(script)
