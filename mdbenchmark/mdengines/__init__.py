@@ -86,6 +86,8 @@ def get_available_modules():
                 if mdengine in path:
                     for name in files:
                         if not name.startswith('.'):
+                            if name.endswith('.lua'):
+                                name = name.replace('.lua', '')
                             available_modules[mdengine].append(name)
 
     return available_modules
